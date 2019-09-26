@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Socket.IO Snake Multiplayer</title>
+    <title>Juegillo Socketio TRON</title>
     <style>
       * { margin: 0; padding: 0; }
       body { font: 24px Helvetica, Arial; }
@@ -11,14 +11,14 @@
   <body>
     <div id="scores">
       <div id="own">
-        Nickname: <input type="text" id="nickname" />
-        <input type="button" id="auth" value="Play!" />
+        Usuario: <input type="text" id="nickname" />
+        <input type="button" id="auth" value="Jugar!" />
       </div>
       <hr />
       <div id="others">
       </div>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       GameCanvas = (function() {
@@ -37,26 +37,27 @@
         }
 
         /*
-          Render game canvas & draw players, apples & scores
+          Renderizar juego y dibujar los jugadores
+          ELIAS SE DEBE METER ACA PARA EFECTOS DE DISEÑO Y USABILIDAD
         */
-        GameCanvas.prototype.draw = function(players, apples) {
+        GameCanvas.prototype.draw = function(players) {
           var context = this.context;
           var cellSize = this.cellSize;
 
-          // Render background
+          //renderizar el fondo
           this.context.fillStyle = "#555";
           this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-          // Reset other
+          // Resetear puntajes
           $('#others').text('');
 
-          // Render scores
+          // Renderizar puntos
           players.forEach((p) => {
 
-            // scores
+            // puntajes
             if(p.id === playerId) {
               $('#own')
-                .text(p.nickname + ' score: ' + p.points)
+                .text(p.nickname + ' Puntos: ' + p.points)
                 .append($('<br>'));
             } else {
               $('#others')
@@ -65,7 +66,8 @@
                 .append($('<br>'));
             }
 
-            // players
+            // Jugadores, tengo dos tipos el principal ( activo ) y el resto
+
             if(p.id === playerId) {
               context.fillStyle = "#fff";
             } else {
@@ -73,60 +75,57 @@
             }
             context.fillRect(p.x*cellSize, p.y*cellSize, cellSize, cellSize);
 
-            // tails
+            // LLenado de colas
             p.tail.forEach((t) => {
               context.fillRect(t.x*cellSize, t.y*cellSize, cellSize, cellSize);
             });
           });
 
-          // Render apples
-          apples.forEach((a) => {
-            context.fillStyle = "#ff0000";
-            context.fillRect(a.x*cellSize, a.y*cellSize, cellSize, cellSize);
-          });
         }
 
         return GameCanvas;
       })();
 
       /*
-        Initialize Game
+      Comenzar el juego
       */
 
       var socket = io();
       var playerId;
       var nickname;
 
-      // Authenticate
+      // valida que llegue un nuevo usuario
       $('#auth').click(() => {
         nickname = $('#nickname').val().trim();
         if(nickname && nickname !== '') {
+
+          //mando al servidor un nuevo usuario autenticado
           socket.emit('auth', { nickname }, (session) => {
             playerId = session.id;
-            console.log('new session: ' + playerId);
+            console.log('nuevo usuario : ' + playerId);
           });
         }
       });
 
-      // Create & insert canvas
+      // Crear el html para el canvas
       var canvas = document.createElement("canvas");
       document.body.appendChild(canvas);
 
-      // Create game with canvas
+      // Crear canvas
       var game = new GameCanvas(canvas);
 
-      // Send keystrokes
+      // estar atento al teclado para emitir la nueva accion
       document.onkeydown = (ev) => {
         socket.emit('key', ev.keyCode);
       }
 
-      // Receive state from server
-      socket.on('state', (stuff) => {
-        // and redraw the game
-        game.draw(stuff.players, stuff.apples);
+      // Recibir el estado desde el servidor
+      socket.on('state', (estado) => {
+        // y redibujar juego
+        // no estoy considerando frames ni weas, minimo viable
+        game.draw(estado.players);
       });
 
     </script>
   </body>
 </html>
-

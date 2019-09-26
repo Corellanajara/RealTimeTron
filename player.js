@@ -1,9 +1,8 @@
-// Use ES6
 "use strict";
 
 const _ = require('lodash');
 
-// Key maps
+// Botones
 const KEYS = {
   up: 38,
   right: 39,
@@ -11,10 +10,7 @@ const KEYS = {
   left: 37
 };
 
-/*
- * Snake class
- */
-class Snake {
+class Player {
   constructor(options) {
     _.assign(this, options);
     this.respawn();
@@ -38,13 +34,13 @@ class Snake {
   }
 
   move() {
-    // Update tail
+    // al mover revisar la cola
     for(var i = this.tail.length-1; i >= 0; i--) {
       this.tail[i].x = (i===0) ? this.x : this.tail[i-1].x;
       this.tail[i].y = (i===0) ? this.y : this.tail[i-1].y;
     }
 
-    // Move head
+    // Mover segun lugar
     switch(this.dir) {
       case 'right':
         this.x++; break;
@@ -56,20 +52,20 @@ class Snake {
         this.y++; break;
     }
 
-    // Check boundaries
+    // revisar que llegue a los fondos y mover al fondo contrario
     if(this.x > this.gridSize-1) this.x = 0;
     if(this.x < 0) this.x = this.gridSize-1;
     if(this.y > this.gridSize-1) this.y = 0;
     if(this.y < 0) this.y = this.gridSize-1;
 
-    // Collission detection
+    // obvio, revisar con cada movimiento
     this._checkCollisions();
   }
 
   _checkCollisions() {
-    // With other snakes (including ours)
-    this.snakes.forEach((s) => {
-      // Heads except ourself
+    // Con otros jugadores
+    this.players.forEach((s) => {
+
       if(s !== this) {
         if(s.x === this.x && s.y === this.y) {
           // The bigger survives
@@ -82,12 +78,8 @@ class Snake {
           }
         }
       }
-      // Tails
       s.tail.forEach((t) => {
         if(t.x === this.x && t.y === this.y) {
-          // The bigger survives
-          // ToDo: 3 outcomes
-          // - Same length = both die
           if(s !== this && this.tail.length < s.tail.length) {
             this.respawn();
           } else {
@@ -95,15 +87,7 @@ class Snake {
           }
         }
       });
-    });
-    // With apples
-    this.apples.forEach((a) => {
-      if(a.x === this.x && a.y === this.y) {
-        this._addPoint(1);
-        this._addTail();
-        a.respawn();
-      }
-    });
+    });  
   }
 
   respawn() {
@@ -122,4 +106,4 @@ class Snake {
   }
 }
 
-module.exports = Snake;
+module.exports = Player;

@@ -1,4 +1,3 @@
-// Use ES6
 "use strict";
 
 // Express & Socket.io deps
@@ -7,54 +6,46 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const _ = require('lodash');
 
-const Snake = require('./snake');
-const Apple = require('./apple');
+const Player = require('./player');
+const puerto = 3000;
 
-// ID's seed
+// ID para que sea incrementable
 let autoId = 0;
-// Grid size
+// Tam grilla
 const GRID_SIZE = 40;
-// Remote players 🐍
-let players = [];
-// Apples 🍎
-let apples = [];
 
-/*
- * Serve client
- */
+let players = [];
+
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-http.listen(3000, () => {
-  console.log('listening on *:3000');
+http.listen(puerto, () => {
+  console.log('En el puerto  *:'+puerto);
 });
 
 /*
- * Listen for incoming clients
+ * Lleguen al jueguillo
  */
 io.on('connection', (client) => {
   let player;
   let id;
 
   client.on('auth', (opts, cb) => {
-    // Create player
+    // Iniciar al nuevo jugador, al momento de validar una nueva conexion
     id = ++autoId;
-    player = new Snake(_.assign({
+    player = new Player(_.assign({
       id,
       dir: 'right',
       gridSize: GRID_SIZE,
-      snakes: players,
-      apples
+      players: players
     }, opts));
     players.push(player);
-    // Callback with id
+    // Callback con id
     cb({ id: autoId });
   });
 
-  // Receive keystrokes
   client.on('key', (key) => {
-    // and change direction accordingly
     if(player) {
       player.changeDirection(key);
     }
@@ -66,19 +57,12 @@ io.on('connection', (client) => {
   });
 });
 
-// Create apples
-for(var i=0; i < 3; i++) {
-  apples.push(new Apple({
-    gridSize: GRID_SIZE,
-    snakes: players,
-    apples
-  }));
-}
 
-// Main loop
+// Main
 setInterval(() => {
   players.forEach((p) => {
     p.move();
+    p._addTail();
   });
   io.emit('state', {
     players: players.map((p) => ({
@@ -88,11 +72,7 @@ setInterval(() => {
       nickname: p.nickname,
       points: p.points,
       tail: p.tail
-    })),
-    apples: apples.map((a) => ({
-      x: a.x,
-      y: a.y
     }))
+
   });
 }, 100);
-
